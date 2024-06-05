@@ -107,17 +107,6 @@ namespace GenerateUnitTest
                     var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(filePath));
                     var nameSpace = tree.GetRoot().ChildNodes().Single(x => x.Kind() == SyntaxKind.NamespaceDeclaration);
 
-                    /*
-                    var compilation = CSharpCompilation.Create("HelloWorld")
-                        .AddReferences(MetadataReference.CreateFromFile(
-                            $"{prjItem.ContainingProject.Properties.Cast<Property>().FirstOrDefault(x => x.Name == "FullPath").Value}bin\\Debug\\net6.0\\{prjItem.ContainingProject.Properties.Cast<Property>().FirstOrDefault(x => x.Name == "OutputFileName").Value}"))
-                        .AddSyntaxTrees(tree);
-                    SemanticModel model = compilation.GetSemanticModel(tree);
-                    UsingDirectiveSyntax usingSystem = ((CompilationUnitSyntax)tree.GetRoot()).Usings[3];
-                    NameSyntax systemName = usingSystem.Name;
-                    SymbolInfo nameInfo = model.GetSymbolInfo(systemName);
-                    */
-
                     var classDeclaration = ((ClassDeclarationSyntax)nameSpace.ChildNodes().Single(x => x.Kind() == SyntaxKind.ClassDeclaration)).WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
 
                     if (classDeclaration.Modifiers.Any(x => x.Kind() != SyntaxKind.PublicKeyword))
