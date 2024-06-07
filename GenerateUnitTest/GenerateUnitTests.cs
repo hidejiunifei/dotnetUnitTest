@@ -9,7 +9,8 @@ using System.IO;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.CodeAnalysis.MSBuild;
+using System.Collections.Generic;
 
 namespace GenerateUnitTest
 {
@@ -102,29 +103,44 @@ namespace GenerateUnitTest
             {
                 foreach (UIHierarchyItem selItem in selectedItems)
                 {
+                    Extension.LimparListaUsings();
                     ProjectItem prjItem = selItem.Object as ProjectItem;
                     string filePath = prjItem.Properties.Item("FullPath").Value.ToString();
+
+                    string projectPath = prjItem.ContainingProject.FullName;
+
+                    var workspace = MSBuildWorkspace.Create();
+                    var project = await workspace.OpenProjectAsync(projectPath);
+                    var compilation = await project.GetCompilationAsync();
+                    var syntaxTrees = compilation.SyntaxTrees;
+
                     var tree = CSharpSyntaxTree.ParseText(File.ReadAllText(filePath));
-                    var nameSpace = tree.GetRoot().ChildNodes().Single(x => x.Kind() == SyntaxKind.NamespaceDeclaration);
+                    var nameSpace = tree.GetRoot().ChildNodes().Single(x => x.IsKind(SyntaxKind.NamespaceDeclaration));
 
-                    var classDeclaration = ((ClassDeclarationSyntax)nameSpace.ChildNodes().Single(x => x.Kind() == SyntaxKind.ClassDeclaration)).WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                    var classDeclaration = ((ClassDeclarationSyntax)nameSpace.ChildNodes()
+                        .Single(x => x.IsKind(SyntaxKind.ClassDeclaration)))
+                        .WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
 
-                    if (classDeclaration.Modifiers.Any(x => x.Kind() != SyntaxKind.PublicKeyword))
-                        continue;
-                    var constructor = ((ConstructorDeclarationSyntax)classDeclaration.ChildNodes().Single(z => z.Kind() == SyntaxKind.ConstructorDeclaration)).WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
-
-                    if (constructor.Modifiers.Any(x => x.Kind() != SyntaxKind.PublicKeyword))
-                        continue;
+                    var constructor = ((ConstructorDeclarationSyntax)classDeclaration.ChildNodes()
+                        .Single(z => z.IsKind(SyntaxKind.ConstructorDeclaration)))
+                        .WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
 
                     var comp = SyntaxFactory.CompilationUnit()
-                        .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName($"{((NamespaceDeclarationSyntax)nameSpace).Name}")))
+                        .AddUsings(SyntaxFactory.UsingDirective(((NamespaceDeclarationSyntax)nameSpace).Name))
+                        .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("Moq")))
+                        .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("Xunit")))
+                        .AddUsings(Extension.GenerateUsingsByParameters(constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees))
                         .AddMembers(
-                        SyntaxFactory.NamespaceDeclaration(SyntaxFactory.IdentifierName($"{((NamespaceDeclarationSyntax)nameSpace).Name}"))
-                            .AddClassDeclaration(classDeclaration, constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>())
-                        ).NormalizeWhitespace().ToFullString();
+                        SyntaxFactory.NamespaceDeclaration(((NamespaceDeclarationSyntax)nameSpace).Name)
+                            .AddClassDeclaration(classDeclaration, constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees)
+                        )
+                        .AddUsings(Extension.UsingList)
+                        .NormalizeWhitespace().ToFullString();
                     File.WriteAllText(filePath.Replace(".cs", "Tests.cs"), comp);
                 }
             }
         }
+
+        
     }
 }
