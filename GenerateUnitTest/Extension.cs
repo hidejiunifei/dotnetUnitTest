@@ -93,7 +93,7 @@ namespace GenerateUnitTest
                             .DescendantNodes().OfType<ConstructorDeclarationSyntax>().First().ParameterList.Parameters
                             .Select(c => SyntaxFactory.LocalDeclarationStatement(
                                 SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("var"))
-                                    .AddVariables(SyntaxFactory.VariableDeclarator($"{c.Type.GetText().ToString().Substring(0, 1).ToLower()}{c.Type.GetText().ToString().Trim().Substring(1)}")
+                                    .AddVariables(SyntaxFactory.VariableDeclarator(GetVariableName(c.Type))
                                     .WithInitializer(SyntaxFactory.EqualsValueClause(
                                         SyntaxFactory.ObjectCreationExpression(c.Type, SyntaxFactory.ArgumentList(), null)
                     ))))).ToArray()
@@ -112,10 +112,22 @@ namespace GenerateUnitTest
                                         .Parameters.First().Type).Identifier.Text) != null)?.GetRoot()
                                         .DescendantNodes().OfType<ConstructorDeclarationSyntax>().First().ParameterList.Parameters
                                             .Select(c => SyntaxFactory.Argument(
-                                                SyntaxFactory.IdentifierName($"{c.Type.GetText().ToString().Substring(0, 1).ToLower()}{c.Type.GetText().ToString().Trim().Substring(1)}")
+                                                SyntaxFactory.IdentifierName(GetVariableName(c.Type))
                                     )).ToArray())
                         ), null)))))
                     )).ToArray());
+        }
+
+        private static string GetVariableName(TypeSyntax syntax) {
+            if (syntax is GenericNameSyntax)
+            {
+                _usingList.Add(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System.Collections.Generic")));
+                return $"{((GenericNameSyntax)syntax).TypeArgumentList.Arguments.First().GetText().ToString().Substring(0,1).ToLower()}{((GenericNameSyntax)syntax).TypeArgumentList.Arguments.First().GetText().ToString().Substring(1)}s";
+            }
+            else
+            {
+                return $"{syntax.GetText().ToString().Substring(0, 1).ToLower()}{syntax.GetText().ToString().Trim().Substring(1)}";
+            }
         }
 
         private static MethodDeclarationSyntax GenerateUsingsByParameters(this MethodDeclarationSyntax syntax, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees)
@@ -130,17 +142,48 @@ namespace GenerateUnitTest
 
             foreach (var item in param)
             {
-                var classNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
-                .FirstOrDefault(y => y.Identifier.Text == ((IdentifierNameSyntax)item.Type).Identifier.Text && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
+                var classNamespaces = new List<NamespaceDeclarationSyntax>();
+                var interfaceNamespaces = new List<NamespaceDeclarationSyntax>();
+                NamespaceDeclarationSyntax classNamespace;
+                NamespaceDeclarationSyntax interfaceNamespace;
 
-                var interfaceNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<InterfaceDeclarationSyntax>())
-                .FirstOrDefault(y => y.Identifier.Text == ((IdentifierNameSyntax)item.Type).Identifier.Text && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
+                if (item.Type is GenericNameSyntax)
+                {
+                    var argumentTypes = ((GenericNameSyntax)item.Type).TypeArgumentList.Arguments.Select(y => ((IdentifierNameSyntax)y).Identifier.Text);
 
-                if (classNamespace != null)
-                    list.Add(SyntaxFactory.UsingDirective(classNamespace.Name));
+                    classNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
+                    .FirstOrDefault(y => argumentTypes.Contains(y.Identifier.Text) && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
 
-                if (interfaceNamespace != null)
-                    list.Add(SyntaxFactory.UsingDirective(interfaceNamespace.Name));
+                    if (classNamespace != null)
+                        classNamespaces.Add(classNamespace);
+
+                    interfaceNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<InterfaceDeclarationSyntax>())
+                    .FirstOrDefault(y => argumentTypes.Contains(y.Identifier.Text) && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
+
+                    if (interfaceNamespace != null)
+                        interfaceNamespaces.Add(interfaceNamespace);
+                }
+                else 
+                {
+                    classNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
+                    .FirstOrDefault(y => y.Identifier.Text == ((IdentifierNameSyntax)item.Type).Identifier.Text 
+                    && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
+
+                    if (classNamespace != null)
+                        classNamespaces.Add(classNamespace);
+
+                    interfaceNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<InterfaceDeclarationSyntax>())
+                    .FirstOrDefault(y => y.Identifier.Text == ((IdentifierNameSyntax)item.Type).Identifier.Text 
+                    && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
+
+                    if (interfaceNamespace != null)
+                        interfaceNamespaces.Add(interfaceNamespace);
+                }
+                if (classNamespaces.Any())
+                    list.AddRange(classNamespaces.Select(x => SyntaxFactory.UsingDirective(x.Name)));
+
+                if (interfaceNamespaces.Any())
+                    list.AddRange(interfaceNamespaces.Select(x => SyntaxFactory.UsingDirective(x.Name)));
             }
 
             return list.ToArray();
