@@ -10,7 +10,6 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
-using System.Collections.Generic;
 
 namespace GenerateUnitTest
 {
