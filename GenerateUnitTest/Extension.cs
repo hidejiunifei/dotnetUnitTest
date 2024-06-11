@@ -74,12 +74,22 @@ namespace GenerateUnitTest
 
             return syntax.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.IdentifierName("Notifiable")))
                 .AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.IdentifierName(
-                    $"IRequestHandler<{((IdentifierNameSyntax)param.First().Type).Identifier.Text}>")));
+                    $"IRequestHandler<{((IdentifierNameSyntax)param.First().Type).Identifier.Text}, object>")));
         }
-        public static NamespaceDeclarationSyntax AddClassDeclaration(this NamespaceDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees, bool tests)
+
+        private static ClassDeclarationSyntax AddMembers(this ClassDeclarationSyntax syntax, IEnumerable<MemberDeclarationSyntax> members, bool tests)
+        {
+            if (tests)
+                return syntax;
+
+            return syntax.AddMembers(members.ToArray());
+        }
+
+        public static NamespaceDeclarationSyntax AddClassDeclaration(this NamespaceDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees, IEnumerable<MemberDeclarationSyntax> members, bool tests)
         {
             return syntax.AddMembers(
                 SyntaxFactory.ClassDeclaration($"{classDeclaration.Identifier.Text}{(tests ? "Tests": string.Empty )}")
+                .AddMembers(members, tests)
                 .AddBaseListTypes(classDeclaration.ParameterList.Parameters, tests)
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .AddMembers(classDeclaration.Identifier.Text, tests)

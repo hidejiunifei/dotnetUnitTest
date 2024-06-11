@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
@@ -135,7 +136,7 @@ namespace GenerateUnitTest
                                 $"{((IdentifierNameSyntax)member.ParameterList.Parameters.First().Type).Identifier.Text}Handler"))
                             .AddParameterListParameters(member.ParameterList.Parameters.ToArray())
                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                            , constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, false).AddMembers(member)
+                            , constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, new List<MemberDeclarationSyntax>() { member }, false)
                         )
                         .AddUsings(Extension.GenerateUsingsByParameters(member.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees))
                         .NormalizeWhitespace().ToFullString();
