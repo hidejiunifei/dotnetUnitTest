@@ -25,7 +25,7 @@ namespace GenerateUnitTest
 
         private static ClassDeclarationSyntax AddConstructorDeclaration(this ClassDeclarationSyntax syntax, string className, IEnumerable<ParameterSyntax> param, bool tests)
         {
-            return syntax.AddMembers(SyntaxFactory.ConstructorDeclaration($"{className}Tests")
+            return syntax.AddMembers(SyntaxFactory.ConstructorDeclaration($"{className}{(tests ? "Tests" : string.Empty)}")
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .WithBody(SyntaxFactory.Block(
                     new SyntaxList<StatementSyntax>(
@@ -56,7 +56,7 @@ namespace GenerateUnitTest
                         ));
         }
 
-        private static ClassDeclarationSyntax AddMembersConditionally(this ClassDeclarationSyntax syntax, string identifier, bool tests)
+        private static ClassDeclarationSyntax AddMembers(this ClassDeclarationSyntax syntax, string identifier, bool tests)
         {
             if (tests)
                 syntax.AddMembers(SyntaxFactory.FieldDeclaration(SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName(identifier)).
@@ -67,12 +67,22 @@ namespace GenerateUnitTest
             return syntax;
         }
 
+        private static ClassDeclarationSyntax AddBaseListTypes(this ClassDeclarationSyntax syntax, bool tests)
+        {
+            if (tests)
+                return syntax;
+
+            return syntax.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.IdentifierName("Notifiable")))
+                .AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.IdentifierName(
+                    $"IRequestHandler<{((IdentifierNameSyntax)syntax.ParameterList.Parameters.First().Type).Identifier.Text}>")));
+        }
         public static NamespaceDeclarationSyntax AddClassDeclaration(this NamespaceDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees, bool tests)
         {
             return syntax.AddMembers(
                 SyntaxFactory.ClassDeclaration($"{classDeclaration.Identifier.Text}{(tests ? "Tests": string.Empty )}")
+                .AddBaseListTypes(tests)
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                .AddMembersConditionally(classDeclaration.Identifier.Text, tests)
+                .AddMembers(classDeclaration.Identifier.Text, tests)
                 .AddMembers(
                     param.Select(x => (tests ? SyntaxFactory.FieldDeclaration(
                             SyntaxFactory.VariableDeclaration(SyntaxFactory.GenericName(SyntaxFactory.ParseToken("Mock"),

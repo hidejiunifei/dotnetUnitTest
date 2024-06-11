@@ -133,9 +133,6 @@ namespace GenerateUnitTest
                         SyntaxFactory.NamespaceDeclaration(((NamespaceDeclarationSyntax)nameSpace).Name)
                             .AddClassDeclaration(SyntaxFactory.ClassDeclaration((
                                 $"{((IdentifierNameSyntax)member.ParameterList.Parameters.First().Type).Identifier.Text}Handler"))
-                                .AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.IdentifierName("Notifiable")))
-                                .AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.IdentifierName(
-                                    $"IRequestHandler<{((IdentifierNameSyntax)member.ParameterList.Parameters.First().Type).Identifier.Text}>")))
                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                             , constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, false).AddMembers(member)
                         )
