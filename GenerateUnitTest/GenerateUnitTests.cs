@@ -131,7 +131,7 @@ namespace GenerateUnitTest
                         .AddUsings(Extension.GenerateUsingsByParameters(constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees))
                         .AddMembers(
                         SyntaxFactory.NamespaceDeclaration(((NamespaceDeclarationSyntax)nameSpace).Name)
-                            .AddClassDeclaration(classDeclaration, constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees)
+                            .AddClassDeclaration(classDeclaration, constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, true)
                         )
                         .AddUsings(Extension.UsingList)
                         .NormalizeWhitespace().ToFullString();

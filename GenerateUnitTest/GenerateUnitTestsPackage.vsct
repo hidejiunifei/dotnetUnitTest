@@ -15,10 +15,10 @@
         defining some of the constants that we will use inside the file. -->
 
   <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
-  <Extern href="stdidcmd.h"/>
+  <Extern href="stdidcmd.h" />
 
   <!--This header contains the command ids for the menus provided by the shell. -->
-  <Extern href="vsshlids.h"/>
+  <Extern href="vsshlids.h" />
 
   <!--The Commands section is where commands, menus, and menu groups are defined.
       This section uses a Guid to identify the package that provides the command defined inside it. -->
@@ -37,7 +37,10 @@
          must be a menu. -->
     <Groups>
       <Group guid="guidGenerateHandlerUnitTestsPackageCmdSet" id="MyMenuGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE"/>
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
+      </Group>
+      <Group guid="guidGenerateUnitTestsPackageCmdSet" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
       </Group>
     </Groups>
 
@@ -58,6 +61,12 @@
           <ButtonText>Gerar setup de testes unitários</ButtonText>
         </Strings>
       </Button>
+      <Button guid="guidGenerateUnitTestsPackageCmdSet" id="cmdidSplitHandler" priority="0x0100" type="Button">
+        <Parent guid="guidGenerateUnitTestsPackageCmdSet" id="MyMenuGroup" />
+        <Strings>
+          <ButtonText>Separar comandos do handler em arquivos</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
 
   </Commands>
@@ -71,5 +80,11 @@
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="GenerateHandlerUnitTestsId" value="0x0100" />
     </GuidSymbol>
+  
+    <GuidSymbol value="{24676142-23f8-4b5b-8c2a-cc6333889260}" name="guidGenerateUnitTestsPackageCmdSet">
+      <IDSymbol value="4128" name="MyMenuGroup" />
+      <IDSymbol value="256" name="cmdidSplitHandler" />
+    </GuidSymbol>
+  
   </Symbols>
 </CommandTable>

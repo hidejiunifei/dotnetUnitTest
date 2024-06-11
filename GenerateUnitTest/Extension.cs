@@ -16,21 +16,33 @@ namespace GenerateUnitTest
             _usingList.Clear();
         }
 
-        private static ClassDeclarationSyntax AddConstructorDeclaration(this ClassDeclarationSyntax syntax, string className, IEnumerable<ParameterSyntax> param)
+        private static SyntaxList<StatementSyntax> AddConditionally(this SyntaxList<StatementSyntax> list, ExpressionStatementSyntax syntax, bool tests) {
+
+            if (tests)
+                list.Add(syntax);
+            return list;
+        }
+
+        private static ClassDeclarationSyntax AddConstructorDeclaration(this ClassDeclarationSyntax syntax, string className, IEnumerable<ParameterSyntax> param, bool tests)
         {
             return syntax.AddMembers(SyntaxFactory.ConstructorDeclaration($"{className}Tests")
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .WithBody(SyntaxFactory.Block(
                     new SyntaxList<StatementSyntax>(
-                        param.Select(x => SyntaxFactory.ExpressionStatement(
+                        param.Select(x => (tests ? SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
                             SyntaxFactory.IdentifierName($"_mock{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"),
                             SyntaxFactory.ObjectCreationExpression(SyntaxFactory.GenericName(SyntaxFactory.ParseToken("Mock"),
                                 SyntaxFactory.TypeArgumentList(
                                     SyntaxFactory.SingletonSeparatedList<TypeSyntax>(
-                                    SyntaxFactory.IdentifierName(x.Type.ToString())))), SyntaxFactory.ArgumentList(), null)
-                            ))).ToArray())
-                            .Add(SyntaxFactory.ExpressionStatement(SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+                                    SyntaxFactory.IdentifierName(x.Type.ToString())))), SyntaxFactory.ArgumentList(), null)))
+                            :
+                            SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
+                            SyntaxFactory.IdentifierName($"_{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"),
+                            SyntaxFactory.ObjectCreationExpression(SyntaxFactory.IdentifierName(x.Type.ToString()), SyntaxFactory.ArgumentList(), null))))
+                            ).ToArray())
+                            .AddConditionally(SyntaxFactory.ExpressionStatement(SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
                             SyntaxFactory.IdentifierName($"_{className.Substring(0, 1).ToLower()}{className.Substring(1)}"), 
                                 SyntaxFactory.ObjectCreationExpression(SyntaxFactory.ParseTypeName(className),
                             SyntaxFactory.ArgumentList(
@@ -39,22 +51,30 @@ namespace GenerateUnitTest
                                         SyntaxFactory.IdentifierName($"_mock{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}.Object")
                                     )).ToArray())
                                 )
-                            , null))))
+                            , null))), tests)
                             )
                         ));
         }
 
-        public static NamespaceDeclarationSyntax AddClassDeclaration(this NamespaceDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees)
+        private static ClassDeclarationSyntax AddMembersConditionally(this ClassDeclarationSyntax syntax, string identifier, bool tests)
+        {
+            if (tests)
+                syntax.AddMembers(SyntaxFactory.FieldDeclaration(SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName(identifier)).
+                    AddVariables(SyntaxFactory.VariableDeclarator(
+                            $"_{identifier.Substring(0, 1).ToLower()}{identifier.Substring(1)}"))
+                    ).AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword)));
+
+            return syntax;
+        }
+
+        public static NamespaceDeclarationSyntax AddClassDeclaration(this NamespaceDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees, bool tests)
         {
             return syntax.AddMembers(
-                SyntaxFactory.ClassDeclaration($"{classDeclaration.Identifier.Text}Tests")
+                SyntaxFactory.ClassDeclaration($"{classDeclaration.Identifier.Text}{(tests ? "Tests": string.Empty )}")
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                .AddMembers(SyntaxFactory.FieldDeclaration(SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName(classDeclaration.Identifier.Text)).
-                    AddVariables(SyntaxFactory.VariableDeclarator(
-                            $"_{classDeclaration.Identifier.Text.Substring(0,1).ToLower()}{classDeclaration.Identifier.Text.Substring(1)}"))
-                    ).AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword)))
+                .AddMembersConditionally(classDeclaration.Identifier.Text, tests)
                 .AddMembers(
-                    param.Select(x => SyntaxFactory.FieldDeclaration(
+                    param.Select(x => (tests ? SyntaxFactory.FieldDeclaration(
                             SyntaxFactory.VariableDeclaration(SyntaxFactory.GenericName(SyntaxFactory.ParseToken("Mock"),
                             SyntaxFactory.TypeArgumentList(
                                 SyntaxFactory.SingletonSeparatedList<TypeSyntax>(
@@ -62,8 +82,10 @@ namespace GenerateUnitTest
                             .AddVariables(
                             SyntaxFactory.VariableDeclarator(
                                 $"_mock{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"))
-                        ).AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))).ToArray()
-                    ).AddConstructorDeclaration(classDeclaration.Identifier.Text, param)
+                            ) : SyntaxFactory.FieldDeclaration(SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName(x.Type.ToString()))
+                                .AddVariables(SyntaxFactory.VariableDeclarator($"{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"))
+                        )).AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))).ToArray()
+                    ).AddConstructorDeclaration(classDeclaration.Identifier.Text, param, tests)
                     .AddMethodsDeclaration(classDeclaration, syntaxTrees));
         }
 
@@ -93,7 +115,7 @@ namespace GenerateUnitTest
                             .DescendantNodes().OfType<ConstructorDeclarationSyntax>().First().ParameterList.Parameters
                             .Select(c => SyntaxFactory.LocalDeclarationStatement(
                                 SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("var"))
-                                    .AddVariables(SyntaxFactory.VariableDeclarator(GetVariableName(c.Type))
+                                    .AddVariables(SyntaxFactory.VariableDeclarator(c.Type is PredefinedTypeSyntax ? c.Identifier.Text : GetVariableName(c.Type))
                                     .WithInitializer(SyntaxFactory.EqualsValueClause(
                                         SyntaxFactory.ObjectCreationExpression(c.Type, SyntaxFactory.ArgumentList(), null)
                     ))))).ToArray()
@@ -112,7 +134,7 @@ namespace GenerateUnitTest
                                         .Parameters.First().Type).Identifier.Text) != null)?.GetRoot()
                                         .DescendantNodes().OfType<ConstructorDeclarationSyntax>().First().ParameterList.Parameters
                                             .Select(c => SyntaxFactory.Argument(
-                                                SyntaxFactory.IdentifierName(GetVariableName(c.Type))
+                                                SyntaxFactory.IdentifierName(c.Type is PredefinedTypeSyntax ? c.Identifier.Text : GetVariableName(c.Type))
                                     )).ToArray())
                         ), null)))))
                     )).ToArray());
@@ -165,19 +187,22 @@ namespace GenerateUnitTest
                 }
                 else 
                 {
-                    classNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
-                    .FirstOrDefault(y => y.Identifier.Text == ((IdentifierNameSyntax)item.Type).Identifier.Text 
-                    && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
+                    if (!(item.Type is PredefinedTypeSyntax))
+                    {
+                        classNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
+                        .FirstOrDefault(y => y.Identifier.Text == ((IdentifierNameSyntax)item.Type).Identifier.Text
+                        && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
 
-                    if (classNamespace != null)
-                        classNamespaces.Add(classNamespace);
+                        if (classNamespace != null)
+                            classNamespaces.Add(classNamespace);
 
-                    interfaceNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<InterfaceDeclarationSyntax>())
-                    .FirstOrDefault(y => y.Identifier.Text == ((IdentifierNameSyntax)item.Type).Identifier.Text 
-                    && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
+                        interfaceNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<InterfaceDeclarationSyntax>())
+                        .FirstOrDefault(y => y.Identifier.Text == ((IdentifierNameSyntax)item.Type).Identifier.Text
+                        && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
 
-                    if (interfaceNamespace != null)
-                        interfaceNamespaces.Add(interfaceNamespace);
+                        if (interfaceNamespace != null)
+                            interfaceNamespaces.Add(interfaceNamespace);
+                    }
                 }
                 if (classNamespaces.Any())
                     list.AddRange(classNamespaces.Select(x => SyntaxFactory.UsingDirective(x.Name)));
