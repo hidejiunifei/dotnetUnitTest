@@ -89,7 +89,6 @@ namespace GenerateUnitTest
         {
             return syntax.AddMembers(
                 SyntaxFactory.ClassDeclaration($"{classDeclaration.Identifier.Text}{(tests ? "Tests": string.Empty )}")
-                .AddMembers(members, tests)
                 .AddBaseListTypes(classDeclaration.ParameterList.Parameters, tests)
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .AddMembers(classDeclaration.Identifier.Text, tests)
@@ -105,8 +104,10 @@ namespace GenerateUnitTest
                             ) : SyntaxFactory.FieldDeclaration(SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName(x.Type.ToString()))
                                 .AddVariables(SyntaxFactory.VariableDeclarator($"{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"))
                         )).AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))).ToArray()
-                    ).AddConstructorDeclaration(classDeclaration.Identifier.Text, param, tests)
-                    .AddMethodsDeclaration(classDeclaration, syntaxTrees, tests));
+                    )
+                .AddMembers(members, tests)
+                .AddConstructorDeclaration(classDeclaration.Identifier.Text, param, tests)
+                .AddMethodsDeclaration(classDeclaration, syntaxTrees, tests));
         }
 
         private static ClassDeclarationSyntax AddMethodsDeclaration(this ClassDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<SyntaxTree> syntaxTrees, bool tests)
