@@ -133,6 +133,7 @@ namespace GenerateUnitTest
                         SyntaxFactory.NamespaceDeclaration(((NamespaceDeclarationSyntax)nameSpace).Name)
                             .AddClassDeclaration(SyntaxFactory.ClassDeclaration((
                                 $"{((IdentifierNameSyntax)member.ParameterList.Parameters.First().Type).Identifier.Text}Handler"))
+                            .AddParameterListParameters(member.ParameterList.Parameters.ToArray())
                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                             , constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, false).AddMembers(member)
                         )

@@ -67,20 +67,20 @@ namespace GenerateUnitTest
             return syntax;
         }
 
-        private static ClassDeclarationSyntax AddBaseListTypes(this ClassDeclarationSyntax syntax, bool tests)
+        private static ClassDeclarationSyntax AddBaseListTypes(this ClassDeclarationSyntax syntax, IEnumerable<ParameterSyntax> param, bool tests)
         {
             if (tests)
                 return syntax;
 
             return syntax.AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.IdentifierName("Notifiable")))
                 .AddBaseListTypes(SyntaxFactory.SimpleBaseType(SyntaxFactory.IdentifierName(
-                    $"IRequestHandler<{((IdentifierNameSyntax)syntax.ParameterList.Parameters.First().Type).Identifier.Text}>")));
+                    $"IRequestHandler<{((IdentifierNameSyntax)param.First().Type).Identifier.Text}>")));
         }
         public static NamespaceDeclarationSyntax AddClassDeclaration(this NamespaceDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees, bool tests)
         {
             return syntax.AddMembers(
                 SyntaxFactory.ClassDeclaration($"{classDeclaration.Identifier.Text}{(tests ? "Tests": string.Empty )}")
-                .AddBaseListTypes(tests)
+                .AddBaseListTypes(classDeclaration.ParameterList.Parameters, tests)
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .AddMembers(classDeclaration.Identifier.Text, tests)
                 .AddMembers(
