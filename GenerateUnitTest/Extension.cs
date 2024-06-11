@@ -86,11 +86,14 @@ namespace GenerateUnitTest
                                 .AddVariables(SyntaxFactory.VariableDeclarator($"{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"))
                         )).AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))).ToArray()
                     ).AddConstructorDeclaration(classDeclaration.Identifier.Text, param, tests)
-                    .AddMethodsDeclaration(classDeclaration, syntaxTrees));
+                    .AddMethodsDeclaration(classDeclaration, syntaxTrees, tests));
         }
 
-        private static ClassDeclarationSyntax AddMethodsDeclaration(this ClassDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<SyntaxTree> syntaxTrees)
+        private static ClassDeclarationSyntax AddMethodsDeclaration(this ClassDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<SyntaxTree> syntaxTrees, bool tests)
         {
+            if (!tests)
+                return syntax;
+
             return syntax.AddMembers(classDeclaration.Members.Where(x => x.Kind() == SyntaxKind.MethodDeclaration &&
                 x.Modifiers.Any(z => z.IsKind(SyntaxKind.PublicKeyword)) && 
                 ((MethodDeclarationSyntax)x).Identifier.Text == "Handle")

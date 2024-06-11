@@ -134,11 +134,9 @@ namespace GenerateUnitTest
                             .AddClassDeclaration(SyntaxFactory.ClassDeclaration((
                                 $"{((IdentifierNameSyntax)member.ParameterList.Parameters.First().Type).Identifier.Text}Handler"))
                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                            .AddMembers(
-                                member
-                            ), constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, false)
+                            , constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, false).AddMembers(member)
                         )
-                        //.AddUsings(Extension.UsingList)
+                        .AddUsings(Extension.GenerateUsingsByParameters(member.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees))
                         .NormalizeWhitespace().ToFullString();
                         File.WriteAllText($"{filePath.Substring(0, filePath.LastIndexOf(@"\") + 1)}{((IdentifierNameSyntax)member.ParameterList.Parameters.First().Type).Identifier.Text}Handler.cs", comp);
                     }
