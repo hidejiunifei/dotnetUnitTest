@@ -23,10 +23,19 @@ namespace GenerateUnitTest
             return list;
         }
 
+        private static ConstructorDeclarationSyntax WithParameterList(this ConstructorDeclarationSyntax syntax, IEnumerable<ParameterSyntax> param, bool tests)
+        {
+            if (tests)
+                return syntax;
+
+            return syntax.WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList<ParameterSyntax>(param)));
+        }
+
         private static ClassDeclarationSyntax AddConstructorDeclaration(this ClassDeclarationSyntax syntax, string className, IEnumerable<ParameterSyntax> param, bool tests)
         {
             return syntax.AddMembers(SyntaxFactory.ConstructorDeclaration($"{className}{(tests ? "Tests" : string.Empty)}")
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
+                .WithParameterList(param, tests)
                 .WithBody(SyntaxFactory.Block(
                     new SyntaxList<StatementSyntax>(
                         param.Select(x => (tests ? SyntaxFactory.ExpressionStatement(
@@ -39,8 +48,9 @@ namespace GenerateUnitTest
                             :
                             SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-                            SyntaxFactory.IdentifierName($"_{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"),
-                            SyntaxFactory.ObjectCreationExpression(SyntaxFactory.IdentifierName(x.Type.ToString()), SyntaxFactory.ArgumentList(), null))))
+                            SyntaxFactory.IdentifierName($"_{x.Identifier.Text.Substring(0, 1).ToLower()}{x.Identifier.Text.Substring(1)}"),
+                            SyntaxFactory.IdentifierName($"{x.Identifier.Text.Substring(0, 1).ToLower()}{x.Identifier.Text.Substring(1)}")
+                            )))
                             ).ToArray())
                             .AddConditionally(SyntaxFactory.ExpressionStatement(SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
                             SyntaxFactory.IdentifierName($"_{className.Substring(0, 1).ToLower()}{className.Substring(1)}"), 
@@ -77,19 +87,19 @@ namespace GenerateUnitTest
                     $"IRequestHandler<{((IdentifierNameSyntax)param.First().Type).Identifier.Text}, object>")));
         }
 
-        private static ClassDeclarationSyntax AddMembers(this ClassDeclarationSyntax syntax, IEnumerable<MemberDeclarationSyntax> members, bool tests)
+        private static ClassDeclarationSyntax AddMembers(this ClassDeclarationSyntax syntax, MemberDeclarationSyntax member, bool tests)
         {
             if (tests)
                 return syntax;
 
-            return syntax.AddMembers(members.ToArray());
+            return syntax.AddMembers(member);
         }
 
-        public static NamespaceDeclarationSyntax AddClassDeclaration(this NamespaceDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees, IEnumerable<MemberDeclarationSyntax> members, bool tests)
+        public static NamespaceDeclarationSyntax AddClassDeclaration(this NamespaceDeclarationSyntax syntax, ClassDeclarationSyntax classDeclaration, IEnumerable<ParameterSyntax> param, IEnumerable<SyntaxTree> syntaxTrees, MemberDeclarationSyntax member, bool tests)
         {
             return syntax.AddMembers(
                 SyntaxFactory.ClassDeclaration($"{classDeclaration.Identifier.Text}{(tests ? "Tests": string.Empty )}")
-                .AddBaseListTypes(classDeclaration.ParameterList.Parameters, tests)
+                .AddBaseListTypes(classDeclaration?.ParameterList?.Parameters, tests)
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
                 .AddMembers(classDeclaration.Identifier.Text, tests)
                 .AddMembers(
@@ -102,11 +112,11 @@ namespace GenerateUnitTest
                             SyntaxFactory.VariableDeclarator(
                                 $"_mock{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"))
                             ) : SyntaxFactory.FieldDeclaration(SyntaxFactory.VariableDeclaration(SyntaxFactory.IdentifierName(x.Type.ToString()))
-                                .AddVariables(SyntaxFactory.VariableDeclarator($"{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"))
+                                .AddVariables(SyntaxFactory.VariableDeclarator($"_{x.Identifier.Text.Substring(0, 1).ToLower()}{x.Identifier.Text.Substring(1)}"))
                         )).AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))).ToArray()
                     )
-                .AddMembers(members, tests)
                 .AddConstructorDeclaration(classDeclaration.Identifier.Text, param, tests)
+                .AddMembers(member, tests)
                 .AddMethodsDeclaration(classDeclaration, syntaxTrees, tests));
         }
 

@@ -130,13 +130,17 @@ namespace GenerateUnitTest
                     {
                         var comp = SyntaxFactory.CompilationUnit()
                         .AddUsings(Extension.GenerateUsingsByParameters(constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees))
+                        .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("Araujo.Core.Results")))
+                        .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("MediatR")))
+                        .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("AutoMapper")))
+                        .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("prmToolkit.NotificationPattern")))
                         .AddMembers(
                         SyntaxFactory.NamespaceDeclaration(((NamespaceDeclarationSyntax)nameSpace).Name)
                             .AddClassDeclaration(SyntaxFactory.ClassDeclaration((
                                 $"{((IdentifierNameSyntax)member.ParameterList.Parameters.First().Type).Identifier.Text}Handler"))
                             .AddParameterListParameters(member.ParameterList.Parameters.ToArray())
                             .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword))
-                            , constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, new List<MemberDeclarationSyntax>() { member }, false)
+                            , constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees, member, false)
                         )
                         .AddUsings(Extension.GenerateUsingsByParameters(member.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees))
                         .NormalizeWhitespace().ToFullString();
