@@ -203,9 +203,9 @@ namespace GenerateUnitTest
                 NamespaceDeclarationSyntax classNamespace;
                 NamespaceDeclarationSyntax interfaceNamespace;
 
-                if (item.Type is GenericNameSyntax)
+                if (item.Type is GenericNameSyntax genericNameSyntax)
                 {
-                    var argumentTypes = ((GenericNameSyntax)item.Type).TypeArgumentList.Arguments.Select(y => ((IdentifierNameSyntax)y).Identifier.Text);
+                    var argumentTypes = genericNameSyntax.TypeArgumentList.Arguments.Select(y => ((IdentifierNameSyntax)y).Identifier.Text);
 
                     classNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
                     .FirstOrDefault(y => argumentTypes.Contains(y.Identifier.Text) && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
