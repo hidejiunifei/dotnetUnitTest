@@ -39,9 +39,6 @@
       <Group guid="guidGenerateHandlerUnitTestsPackageCmdSet" id="MyMenuGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
       </Group>
-      <Group guid="guidGenerateUnitTestsPackageCmdSet" id="MyMenuGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
-      </Group>
     </Groups>
 
     <!--Buttons section. -->
@@ -61,12 +58,6 @@
           <ButtonText>Gerar setup de testes unitários</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidGenerateUnitTestsPackageCmdSet" id="cmdidSplitHandler" priority="0x0100" type="Button">
-        <Parent guid="guidGenerateUnitTestsPackageCmdSet" id="MyMenuGroup" />
-        <Strings>
-          <ButtonText>Separar comandos do handler em arquivos</ButtonText>
-        </Strings>
-      </Button>
     </Buttons>
 
   </Commands>
@@ -80,11 +71,6 @@
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="GenerateHandlerUnitTestsId" value="0x0100" />
     </GuidSymbol>
-  
-    <GuidSymbol value="{24676142-23f8-4b5b-8c2a-cc6333889260}" name="guidGenerateUnitTestsPackageCmdSet">
-      <IDSymbol value="4128" name="MyMenuGroup" />
-      <IDSymbol value="256" name="cmdidSplitHandler" />
-    </GuidSymbol>
-  
+    
   </Symbols>
 </CommandTable>

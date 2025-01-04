@@ -55,7 +55,6 @@
     <Compile Include="GenerateUnitTests.cs" />
     <Compile Include="GenerateUnitTestsPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SplitHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />
