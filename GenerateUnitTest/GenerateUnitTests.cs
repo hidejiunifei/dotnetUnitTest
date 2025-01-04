@@ -128,6 +128,7 @@ namespace GenerateUnitTest
                         .AddUsings(SyntaxFactory.UsingDirective(((NamespaceDeclarationSyntax)nameSpace).Name))
                         .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("Moq")))
                         .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("Xunit")))
+                        .AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.IdentifierName("System.Threading")))
                         .AddUsings(Extension.GenerateUsingsByParameters(constructor.ParameterList.ChildNodes().Cast<ParameterSyntax>(), syntaxTrees))
                         .AddMembers(
                         SyntaxFactory.NamespaceDeclaration(((NamespaceDeclarationSyntax)nameSpace).Name)

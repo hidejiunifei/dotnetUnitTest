@@ -127,8 +127,16 @@ namespace GenerateUnitTest
                         ), null)))))
                     )
                     .AddBodyStatements(SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.InvocationExpression(SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, SyntaxFactory.IdentifierName($"_{classDeclaration.Identifier.Text.Substring(0, 1).ToLower()}{classDeclaration.Identifier.Text.Substring(1)}"), SyntaxFactory.IdentifierName("Handle"))
-                    ))
+                        SyntaxFactory.InvocationExpression(
+                            SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, 
+                            SyntaxFactory.IdentifierName($"_{classDeclaration.Identifier.Text.Substring(0, 1).ToLower()}{classDeclaration.Identifier.Text.Substring(1)}"), 
+                            SyntaxFactory.IdentifierName("Handle")),
+                            SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList<ArgumentSyntax>(new List<ArgumentSyntax>() {
+                                SyntaxFactory.Argument(SyntaxFactory.IdentifierName($"{((MethodDeclarationSyntax)y).ParameterList.Parameters.First().Type.GetText().ToString().Substring(0, 1).ToLower()}{((MethodDeclarationSyntax)y).ParameterList.Parameters.First().Type.GetText().ToString().Substring(1)}")),
+                                SyntaxFactory.Argument(SyntaxFactory.ParseName("CancellationToken.None"))
+                            }))
+                            )
+                    )
                     )).ToArray());
         }
 
