@@ -30,7 +30,7 @@ namespace GenerateUnitTest
                     new SyntaxList<StatementSyntax>(
                         param.Select(x => (SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression,
-                            SyntaxFactory.IdentifierName($"_mock{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"),
+                            SyntaxFactory.IdentifierName($"_mock{x.Type.ToString().Substring(0, 1).ToUpper()}{x.Type.ToString().Substring(1)}"),
                             SyntaxFactory.ObjectCreationExpression(SyntaxFactory.GenericName(SyntaxFactory.ParseToken("Mock"),
                                 SyntaxFactory.TypeArgumentList(
                                     SyntaxFactory.SingletonSeparatedList<TypeSyntax>(
@@ -42,7 +42,7 @@ namespace GenerateUnitTest
                             SyntaxFactory.ArgumentList(
                                 SyntaxFactory.SeparatedList<ArgumentSyntax>(
                                     param.Select(x => SyntaxFactory.Argument(
-                                        SyntaxFactory.IdentifierName($"_mock{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}.Object")
+                                        SyntaxFactory.IdentifierName($"_mock{x.Type.ToString().Substring(0, 1).ToUpper()}{x.Type.ToString().Substring(1)}.Object")
                                     )).ToArray())
                                 )
                             , null)))))));
@@ -70,7 +70,7 @@ namespace GenerateUnitTest
                                 SyntaxFactory.IdentifierName(x.Type.ToString())))))
                             .AddVariables(
                             SyntaxFactory.VariableDeclarator(
-                                $"_mock{x.Identifier.Text.Substring(0, 1).ToUpper()}{x.Identifier.Text.Substring(1)}"))
+                                $"_mock{x.Type.ToString().Substring(0, 1).ToUpper()}{x.Type.ToString().Substring(1)}"))
                             )
                     .AddModifiers(SyntaxFactory.Token(SyntaxKind.PrivateKeyword), SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword))).ToArray())
                 .AddConstructorDeclaration(classDeclaration.Identifier.Text, param)
