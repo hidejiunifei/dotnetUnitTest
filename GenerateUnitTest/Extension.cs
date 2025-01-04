@@ -171,7 +171,7 @@ namespace GenerateUnitTest
 
                 if (item.Type is GenericNameSyntax genericNameSyntax)
                 {
-                    var argumentTypes = genericNameSyntax.TypeArgumentList.Arguments.Select(y => ((IdentifierNameSyntax)y).Identifier.Text);
+                    var argumentTypes = genericNameSyntax.TypeArgumentList.Arguments.Where(x => !(x is PredefinedTypeSyntax)).Select(y => ((IdentifierNameSyntax)y).Identifier.Text);
 
                     classNamespace = syntaxTrees.SelectMany(x => x.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>())
                     .FirstOrDefault(y => argumentTypes.Contains(y.Identifier.Text) && y.Parent is NamespaceDeclarationSyntax)?.Parent as NamespaceDeclarationSyntax;
